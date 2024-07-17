@@ -15,7 +15,7 @@ const options = {
                 description: 'Local Development',
             },
             {
-                url: 'https://api.surakano.site/',
+                url: 'https://api.murakano.site/',
                 description: 'Real Server',
             },
         ],

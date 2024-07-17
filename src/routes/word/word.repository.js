@@ -127,6 +127,7 @@ exports.updateWord = async (requestId, formData) => {
         }
 
         // word 데이터를 request 데이터로 업데이트합니다.
+        wordToUpdate.word = formData.devTerm;
         wordToUpdate.awkPron = formData.awkPron;
         wordToUpdate.comPron = formData.commonPron;
         wordToUpdate.info = formData.addInfo;

@@ -18,6 +18,4 @@ wordSchema.pre(/^findOne/, async function (next) {
     next();
 });
 
-
-
 module.exports = mongoose.model('Word', wordSchema);

@@ -39,7 +39,7 @@ userRouter.get('/profile', isLoggedIn, getProfile);
 
 // 최근 검색어
 userRouter.get('/recent', isLoggedIn, recentSearches); // 최근 검색어 조회
-userRouter.delete('recent/:searchTerm', isLoggedIn, delRecentSearch); // 최근 검색어 삭제
+userRouter.delete('/recent/:searchTerm', isLoggedIn, delRecentSearch); // 최근 검색어 삭제
 
 //등록 요청
 userRouter.post('/requests/new', isLoggedIn, postWords);

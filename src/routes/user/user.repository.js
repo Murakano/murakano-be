@@ -91,6 +91,18 @@ exports.postWords = async (userId, formData, nickname, type) => {
         if (!user) {
             throw new Error('User not found');
         }
+
+        console.log('User before modification:', JSON.stringify(user.requests, null, 2));
+
+        // 이미 존재하는 단어 요청 확인 (status가 'pend'인 경우에만 중복 확인)
+        const existingRequest = user.requests.find(
+            (req) => req.word === formData.devTerm && req.status === 'pend' && req.deletedAt === 'null'
+        );
+        if (existingRequest) {
+            console.log('이미 같은 단어 요청이 존재합니다.');
+            throw new Error('Word request already exists');
+        }
+
         if (type === 'add') {
             user.requests.push({
                 word: formData.devTerm,
@@ -103,32 +115,29 @@ exports.postWords = async (userId, formData, nickname, type) => {
                 suggestedBy: nickname, // nickname 추가
             });
         } else if (type === 'mod') {
-            const requestExists = user.requests.some((req) => req.word === formData.devTerm);
-
-            if (!requestExists) {
-                user.requests.push({
-                    word: formData.devTerm,
-                    info: formData.addInfo,
-                    awkPron: formData.awkPron,
-                    comPron: formData.commonPron,
-                    deletedAt: null,
-                    status: 'pend',
-                    type: 'mod',
-                    suggestedBy: nickname, // nickname 추가
-                });
-            } else {
-                throw new Error('이미 같은 단어 수정 요청이 존재합니다.');
-            }
+            user.requests.push({
+                word: formData.devTerm,
+                info: formData.addInfo,
+                awkPron: formData.awkPron,
+                comPron: formData.commonPron,
+                deletedAt: null,
+                status: 'pend',
+                type: 'mod',
+                suggestedBy: nickname, // nickname 추가
+            });
         } else {
             throw new Error('Invalid type');
         }
 
         await user.save();
+        console.log('User after modification:', JSON.stringify(user.requests, null, 2));
         return user.requests.find((req) => req.word === formData.devTerm);
     } catch (err) {
+        console.error(err);
         throw err;
     }
 };
+
 exports.getUserRequests = async (userId) => {
     try {
         const user = await User.findById(userId).select('requests').exec();

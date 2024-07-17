@@ -99,7 +99,7 @@
 
 /**
  * @swagger
- * /words/checkDuplicateWord:
+ * /words/duplicate:
  *   post:
  *     summary: 개발 용어 중복 검사
  *     tags: [개발 용어 API]

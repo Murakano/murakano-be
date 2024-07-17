@@ -268,20 +268,18 @@ exports.postWords = async (req, res) => {
         const validData = validateRequest(requestBodySchema, req.body);
         const { _id } = req.user;
         const { formData, type, nickname } = validData;
+        console.log(formData);
         const result = await userService.postWords(_id, formData, nickname, type);
         sendResponse.ok(res, {
             message: SuccessMessage.REGISTER_WORDS_SUCCESS,
             data: result,
         });
     } catch (error) {
-        console.log(error);
+        console.log('Error during postWords:', error);
         if (error?.type === 'ajv') {
             return sendResponse.badRequest(res, ErrorMessage.ADD_REQUEST_WORDS_ERROR);
         }
-        if (error.message === '이미 같은 단어 수정 요청이 존재합니다.') {
-            return sendResponse.badRequest(res, error.message);
-        }
-        sendResponse.fail(req, res, ErrorMessage.REGISTER_WORDS_ERROR);
+        sendResponse.fail(req, res, ErrorMessage.REQUEST_DUPLICATE_ERROR);
     }
 };
 

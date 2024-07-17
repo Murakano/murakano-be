@@ -11,7 +11,6 @@ router.use('/users', userRouter);
 
 router.use('/words', wordRouter);
 
-
 // EB health check
 router.get('/', (_, res) => {
     res.status(200).json({ message: 'Success' });
