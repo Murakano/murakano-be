@@ -141,7 +141,6 @@ exports.kakaoLogin = async (req, res) => {
 
         await redisClient.set(user.email, refreshToken);
         await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
-        await redisClient.expire(user.email, 10);
         res.cookie('refreshToken', refreshToken, config.cookieInRefreshTokenOptions);
 
         sendResponse.ok(res, {

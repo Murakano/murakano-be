@@ -7,11 +7,11 @@ exports.commonLimiter = rateLimit({
     windowMs: 60 * 1000, // 1분 간격
     max: 200, // windowMs동안 최대 호출 횟수
     handler: async (req, res) => {
-        const ip = req.ip;
+        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         try {
-            await redisClient.set(ip, Date.now() + BLOCK_DURATION);
+            await redisClient.set(clientIp, Date.now() + BLOCK_DURATION);
             // 1시간 후 제거
-            await redisClient.expire(ip, BLOCK_DURATION / 1000);
+            await redisClient.expire(clientIp, BLOCK_DURATION / 1000);
         } catch (err) {
             console.error('Redis error:', err);
         }
