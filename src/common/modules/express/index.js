@@ -99,13 +99,11 @@ module.exports = expressLoader = (app) => {
 
     // ip 블랙리스트
     app.use(async (req, res, next) => {
-        const ip = req.ip;
-        console.log('IP:', ip);
         // TODO : PROD 체크 후 삭제
         const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log('Client IP:', clientIp);
+
         try {
-            const blockTime = await redisClient.get(ip);
+            const blockTime = await redisClient.get(clientIp);
             if (blockTime && blockTime > Date.now()) {
                 // 아직 차단 시간이 남아 있는 경우
                 return res.status(403).json({
@@ -113,7 +111,7 @@ module.exports = expressLoader = (app) => {
                 });
             } else if (blockTime) {
                 // 차단 시간이 지난 경우, 블랙리스트에서 IP 제거
-                await redisClient.del(ip);
+                await redisClient.del(clientIp);
             }
         } catch (err) {
             console.error('Redis error:', err);
