@@ -103,7 +103,8 @@ exports.localLogin = async (req, res, next) => {
             const accessToken = generateAccessToken(user);
             const refreshToken = generateRefreshToken(user);
 
-            await redisClient.set(user.email, refreshToken, 'EX', 60 * 60 * 12);
+            await redisClient.set(user.email, refreshToken);
+            await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
 
             res.cookie('refreshToken', refreshToken, config.cookieInRefreshTokenOptions);
 
@@ -138,7 +139,9 @@ exports.kakaoLogin = async (req, res) => {
         const accessToken = generateAccessToken(user);
         const refreshToken = generateRefreshToken(user);
 
-        await redisClient.set(user.email, refreshToken, 'EX', 60 * 60 * 12);
+        await redisClient.set(user.email, refreshToken);
+        await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
+        await redisClient.expire(user.email, 10);
         res.cookie('refreshToken', refreshToken, config.cookieInRefreshTokenOptions);
 
         sendResponse.ok(res, {
@@ -190,7 +193,8 @@ exports.refreshToken = async (req, res) => {
                 email: user.email,
             });
 
-            await redisClient.set(user.email, newRefreshToken, 'EX', 60 * 60 * 12);
+            await redisClient.set(user.email, newRefreshToken);
+            await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
             res.cookie('refreshToken', newRefreshToken, config.cookieInRefreshTokenOptions);
 
             sendResponse.ok(res, {
