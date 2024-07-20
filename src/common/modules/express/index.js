@@ -11,8 +11,8 @@ const ErrorMessage = require('../../constants/error-message');
 const conf = require('../../config');
 const passportConfig = require('../../passport');
 const router = require('../../../routes/index');
+const redisClient = require('../../modules/redis');
 const { commonLimiter } = require('../../utils/rateLimit');
-const blacklistedIps = require('../../utils/blacklist');
 const { swaggerUi, specs } = require('../../../swagger/swagger');
 
 module.exports = expressLoader = (app) => {
@@ -98,19 +98,25 @@ module.exports = expressLoader = (app) => {
     app.use(cookieParser());
 
     // ip 블랙리스트
-    app.use((req, res, next) => {
+    app.use(async (req, res, next) => {
         const ip = req.ip;
-        if (blacklistedIps.has(ip)) {
-            const blockTime = blacklistedIps.get(ip);
-            if (blockTime > Date.now()) {
+        console.log('IP:', ip);
+        // TODO : PROD 체크 후 삭제
+        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        console.log('Client IP:', clientIp);
+        try {
+            const blockTime = await redisClient.get(ip);
+            if (blockTime && blockTime > Date.now()) {
                 // 아직 차단 시간이 남아 있는 경우
                 return res.status(403).json({
                     message: ErrorMessage.TOO_MANY_REQUEST_ERROR,
                 });
-            } else {
+            } else if (blockTime) {
                 // 차단 시간이 지난 경우, 블랙리스트에서 IP 제거
-                blacklistedIps.delete(ip);
+                await redisClient.del(ip);
             }
+        } catch (err) {
+            console.error('Redis error:', err);
         }
         next();
     });
