@@ -16,7 +16,7 @@ exports.commonLimiter = rateLimit({
             console.error('Redis error:', err);
         }
         res.status(429).json({
-            message: '1분에 15번만 요청 할 수 있습니다.',
+            message: '1분에 200번만 요청 할 수 있습니다.',
         });
     },
 });
