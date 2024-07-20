@@ -100,8 +100,9 @@ module.exports = expressLoader = (app) => {
     // ip 블랙리스트
     app.use(async (req, res, next) => {
         // TODO : PROD 체크 후 삭제
-        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        console.log('clientIp: ' + clientIp);
+        const clientIp = req.headers['x-forwarded-for']
+            ? req.headers['x-forwarded-for'].split(',')[0].trim()
+            : req.connection.remoteAddress;
         try {
             const blockTime = await redisClient.get(clientIp);
             if (blockTime && blockTime > Date.now()) {
