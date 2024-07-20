@@ -45,6 +45,8 @@ const ErrorMessage = Object.freeze({
     UPDATE_REQUEST_STATE_ERROR: '요청 상태 변경중 오류가 발생하였습니다.',
     ADD_REQUEST_WORDS_ERROR: '단어는 영어와 기호만 입력할 수 있습니다.',
     REQUEST_DUPLICATE_ERROR: '같은 단어에 대한 요청이 존재합니다.',
+
+    TOO_MANY_REQUEST_ERROR: '과도한 요청으로 IP가 일시적으로 차단되었습니다.',
 });
 
 module.exports = ErrorMessage;

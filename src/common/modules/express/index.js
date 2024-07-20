@@ -7,10 +7,12 @@ const cors = require('cors');
 const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 
+const ErrorMessage = require('../../constants/error-message');
 const conf = require('../../config');
 const passportConfig = require('../../passport');
 const router = require('../../../routes/index');
 const { commonLimiter } = require('../../utils/rateLimit');
+const blacklistedIps = require('../../utils/blacklist');
 const { swaggerUi, specs } = require('../../../swagger/swagger');
 
 module.exports = expressLoader = (app) => {
@@ -94,6 +96,24 @@ module.exports = expressLoader = (app) => {
 
     // Cookie Parser 세팅
     app.use(cookieParser());
+
+    // ip 블랙리스트
+    app.use((req, res, next) => {
+        const ip = req.ip;
+        if (blacklistedIps.has(ip)) {
+            const blockTime = blacklistedIps.get(ip);
+            if (blockTime > Date.now()) {
+                // 아직 차단 시간이 남아 있는 경우
+                return res.status(403).json({
+                    message: ErrorMessage.TOO_MANY_REQUEST_ERROR,
+                });
+            } else {
+                // 차단 시간이 지난 경우, 블랙리스트에서 IP 제거
+                blacklistedIps.delete(ip);
+            }
+        }
+        next();
+    });
 
     // Router 설정
     app.use(commonLimiter);
