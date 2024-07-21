@@ -92,14 +92,11 @@ exports.postWords = async (userId, formData, nickname, type) => {
             throw new Error('User not found');
         }
 
-        console.log('User before modification:', JSON.stringify(user.requests, null, 2));
-
         // 이미 존재하는 단어 요청 확인 (status가 'pend'인 경우에만 중복 확인)
         const existingRequest = user.requests.find(
-            (req) => req.word === formData.devTerm && req.status === 'pend' && req.deletedAt === 'null'
+            (req) => req.word === formData.devTerm && req.status === 'pend' && req.deletedAt === null
         );
         if (existingRequest) {
-            console.log('이미 같은 단어 요청이 존재합니다.');
             throw new Error('Word request already exists');
         }
 
@@ -130,7 +127,7 @@ exports.postWords = async (userId, formData, nickname, type) => {
         }
 
         await user.save();
-        console.log('User after modification:', JSON.stringify(user.requests, null, 2));
+
         return user.requests.find((req) => req.word === formData.devTerm);
     } catch (err) {
         console.error(err);
