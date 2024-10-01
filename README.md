@@ -219,11 +219,11 @@ MongoDB는 기본적으로 JSON 데이터를 저장하도록 설계 되었기 �
 - **기능**
     - React, Express의 요청/응답 공통 모듈을 초기에 구현하여 팀원 모두가 같은 형식으로 http 통신을 할 수 있게 함
     - 백엔드 개발 및 아키텍처 설계 : CI/CD 자동화 및 무중단 배포
-    - [🔗API 쓰로틀링 구현](https://www.notion.so/220931b9c2104b56b29531e2380cc886?pvs=21)
-    - 인증 인가 전략 설계 : [🔗silent-refresh & refresh token rotation 적용](https://velog.io/@jikky/JWT-%EC%A0%80%EC%9E%A5-%EC%9C%84%EC%B9%98%EC%99%80-%EC%9D%B8%EC%A6%9D%EC%9D%B8%EA%B0%80-%EC%A0%84%EB%9E%B5RTR)
-    - 연관 검색어 정렬 알고리즘 구현
+    - 특정 시간 동안 블랙 리스트로 관리하는 API 쓰로틀링 구현
+    - silent-refresh와 refresh token rotation 기반의 인증 인가 전략 설계 및 구현: [🔗silent-refresh & refresh token rotation 적용](https://velog.io/@jikky/JWT-%EC%A0%80%EC%9E%A5-%EC%9C%84%EC%B9%98%EC%99%80-%EC%9D%B8%EC%A6%9D%EC%9D%B8%EA%B0%80-%EC%A0%84%EB%9E%B5RTR)
+    - 레벤슈타인 거리 기반 검색어 추천 기능 개발
     - API 문서 작성 : swagger & notion
-    - 유저 관련 API 개발 : 로컬 / 소셜 로그인 및 회원가입, 회원 탈퇴, Refresh Token API
+    - 유저 관련 API 및 컴포넌트 구현 ( 로컬,소셜 로그인 및 회원가입, 회원탈퇴 )
 
 **👻 Sean (김준호)**
 
