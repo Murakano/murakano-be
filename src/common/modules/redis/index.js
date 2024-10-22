@@ -1,9 +1,10 @@
-const conf = require('../../config');
 const { createClient } = require('redis');
+
+const conf = require('../../config');
 
 const redisClient = createClient({
     url: `redis://${conf.redisUsername}:${conf.redisPassword}@${conf.redisHost}:${conf.redisPort}/0`,
-    legacyMode: true, // 레거시 모드를 사용하는 경우에만 설정합니다.
+    legacyMode: true,
 });
 
 redisClient.on('connect', () => {

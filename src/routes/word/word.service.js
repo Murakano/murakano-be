@@ -1,36 +1,25 @@
 const wordRepository = require('./word.repository');
 
-// 검색 결과 조회
 exports.getSearchWords = async (searchTerm) => {
-    const searchWords = await wordRepository.getSearchWords(searchTerm);
-    return searchWords;
+    return await wordRepository.getSearchWords(searchTerm);
 };
 
-// 인기검색어 조회
 exports.getRankWords = async () => {
-    const rankWords = await wordRepository.getRankWords();
-    return rankWords;
+    return await wordRepository.getRankWords();
 };
 
-// 연관검색어 조회
 exports.getRelatedWords = async (searchTerm, limit) => {
-    const relatedWords = await wordRepository.getRelatedWords(searchTerm, limit);
-    return relatedWords;
+    return await wordRepository.getRelatedWords(searchTerm, limit);
 };
 
-// 전체 단어 목록 조회 & 정렬 (최초 로딩시, 최신순 정렬)
 exports.getAllWords = async (sort, page, limit) => {
-    const words = await wordRepository.getAllWords(sort, page, limit);
-    return words;
+    return await wordRepository.getAllWords(sort, page, limit);
 };
 
 exports.deleteWordContributor = async (_id) => {
     return await wordRepository.deleteWordContributor(_id);
 };
 
-// 등록 단어 중복 검사
 exports.checkDuplicateWord = async (word) => {
-    const isDuplicate = await wordRepository.checkDuplicateWord(word);
-    console.log('isDuplicate: ', isDuplicate);
-    return isDuplicate;
+    return await wordRepository.checkDuplicateWord(word);
 };

@@ -82,10 +82,10 @@ exports.updateRequestState = async (userId, requestId, status, formData, request
         if (requestType === 'add') {
             //TODO: add 일 때, 단어 중복검사 로직 우선적 검증 추가
             await wordRepository.addWord(requestId, formData);
-            await userRepository.updateRequest(requestId, formData); //수정값 사용자 요청 업데이트
+            await userRepository.updateRequest(requestId, formData);
         } else if (requestType === 'mod') {
             await wordRepository.updateWord(requestId, formData);
-            await userRepository.updateRequest(requestId, formData); //수정값 사용자 요청 업데이트
+            await userRepository.updateRequest(requestId, formData);
         } else {
             console.log('requestType 오류');
             return;
