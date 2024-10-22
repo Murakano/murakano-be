@@ -1,6 +1,7 @@
 const passport = require('passport');
-const localStrategy = require('./localStrategy');
+
 const jwtStrategy = require('./jwtStrategy');
+const localStrategy = require('./localStrategy');
 const User = require('../../routes/user/user.model');
 
 module.exports = () => {
@@ -17,7 +18,6 @@ module.exports = () => {
         }
     });
 
-    // 초기화
     localStrategy();
     jwtStrategy();
 };

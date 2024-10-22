@@ -109,7 +109,7 @@ exports.postWords = async (userId, formData, nickname, type) => {
                 deletedAt: null,
                 status: 'pend',
                 type: 'add',
-                suggestedBy: nickname, // nickname 추가
+                suggestedBy: nickname,
             });
         } else if (type === 'mod') {
             user.requests.push({
@@ -120,7 +120,7 @@ exports.postWords = async (userId, formData, nickname, type) => {
                 deletedAt: null,
                 status: 'pend',
                 type: 'mod',
-                suggestedBy: nickname, // nickname 추가
+                suggestedBy: nickname,
             });
         } else {
             throw new Error('Invalid type');
@@ -141,7 +141,7 @@ exports.getUserRequests = async (userId) => {
         if (!user) {
             throw new Error('User not found');
         }
-        // requests 배열에서 deletedAt이 null인 항목만 필터링
+
         const activeRequests = user.requests.filter((request) => request.deletedAt === null);
         return activeRequests;
     } catch (err) {
@@ -151,7 +151,7 @@ exports.getUserRequests = async (userId) => {
 
 exports.getUserRequestsAll = async () => {
     try {
-        const users = await User.find({}, { requests: 1, _id: 0 }); // 모든 유저의 requests 필드만 가져옴
+        const users = await User.find({}, { requests: 1, _id: 0 });
         const allRequests = [];
 
         users.forEach((user) => {
@@ -179,7 +179,7 @@ exports.deleteRequest = async (userId, requestWord) => {
         const request = user.requests.find((req) => req.word === requestWord && req.deletedAt === null);
         if (request) {
             console.log('삭제할 요청 찾음:', request);
-            request.deletedAt = Date.now(); // 요청을 삭제로 표시
+            request.deletedAt = Date.now();
             await user.save();
 
             console.log('요청 삭제 성공');
@@ -208,7 +208,6 @@ exports.updateRequest = async (requestId, formData) => {
 
         const request = user.requests.find((req) => req._id.toString() === requestId && req.deletedAt === null);
         if (request) {
-            // formData의 각 속성 값으로 request의 해당 속성 값 업데이트
             if (formData.addInfo !== undefined) {
                 request.info = formData.addInfo;
             }
@@ -231,9 +230,8 @@ exports.updateRequest = async (requestId, formData) => {
     }
 };
 
-exports.updateRequestState = async (userId, requestId, status) => {
+exports.updateRequestState = async (requestId, status) => {
     try {
-        console.log('updateRequestState 레포진입!!!!!!!!!!!!', userId, requestId, status);
         const user = await User.findOneAndUpdate(
             { 'requests._id': requestId },
             { $set: { 'requests.$.status': status } },

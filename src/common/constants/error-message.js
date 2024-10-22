@@ -14,6 +14,7 @@ const ErrorMessage = Object.freeze({
     AUTHOLIZATION: '권한이 없습니다.',
     RETRY_LOGIN: '다시 로그인해주세요.',
     NOT_AUTHORIZED: '권한이 없습니다.',
+    INVALID_NODE_ENV: 'NODE_ENV가 올바르게 설정되지 않았습니다. production 또는 development 중 하나여야 합니다.',
 
     // USER
     REGISTER_ERROR: '회원가입중 오류가 발생하였습니다.',

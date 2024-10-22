@@ -314,7 +314,7 @@ exports.UserRequestsAll = async (req, res) => {
 
 exports.deleteRequest = async (req, res) => {
     try {
-        const { _id } = req.user; // 현재 로그인한 사용자의 고유 식별자
+        const { _id } = req.user;
         const { word } = req.params;
         await userService.deleteRequest(_id, word);
         sendResponse.ok(res, {
@@ -327,12 +327,16 @@ exports.deleteRequest = async (req, res) => {
 };
 
 exports.getRole = async (req, res) => {
-    const { _id } = req.user;
-    const role = await userService.getRole(_id);
-    sendResponse.ok(res, {
-        message: SuccessMessage.GET_ROLE_SUCCESS,
-        data: { role },
-    });
+    try {
+        const { _id } = req.user;
+        const role = await userService.getRole(_id);
+        sendResponse.ok(res, {
+            message: SuccessMessage.GET_ROLE_SUCCESS,
+            data: { role },
+        });
+    } catch (err) {
+        console.log(err);
+    }
 };
 
 exports.updateRequest = async (req, res) => {
