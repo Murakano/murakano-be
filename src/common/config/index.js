@@ -1,5 +1,6 @@
 const dotenv = require('dotenv');
 const path = require('path');
+const ErrorMessage = require('../constants/error-message');
 
 const envPath = path.join(__dirname, '../../../.env');
 
@@ -75,7 +76,7 @@ switch (process.env.NODE_ENV) {
         conf.envMode = 'dev';
         break;
     default:
-        console.error('NODE_ENV is not set correctly. It should be either production or development');
+        console.error(ErrorMessage.INVALID_NODE_ENV);
 }
 
 module.exports = conf;
