@@ -16,7 +16,6 @@ const {
     loginBodySchema,
     requestBodySchema,
 } = require('./user.schema');
-const { generateAccessToken, generateRefreshToken } = require('../../common/utils/auth');
 const { catchAsync } = require('../../common/utils/catch-async');
 
 exports.register = catchAsync(async (req, res) => {
@@ -132,15 +131,9 @@ exports.getProfile = (req, res) => {
 exports.logout = async (req, res) => {
     const refreshToken = req.cookies.refreshToken;
     if (refreshToken) {
-        try {
-            const email = req.user.email;
-            await redisClient.del(email);
-        } catch (err) {
-            console.error('Redis error:', err);
-        }
+        await userService.logout(req.user.email);
     }
-
-    res.clearCookie('refreshToken', config.cookieInRefreshTokenDeleteOptions);
+    clearRefreshTokenCookie(res);
     return sendResponse.ok(res, {
         message: SuccessMessage.LOGOUT_SUCCESS,
     });
@@ -164,24 +157,16 @@ exports.delRecentSearch = catchAsync(async (req, res) => {
     });
 }, ErrorMessage.DELETE_RECENT_WORD_ERROR);
 
-exports.postWords = async (req, res) => {
-    try {
-        const validData = validateRequest(requestBodySchema, req.body);
-        const { _id } = req.user;
-        const { formData, type, nickname } = validData;
-        const result = await userService.postWords(_id, formData, nickname, type);
-        sendResponse.ok(res, {
-            message: SuccessMessage.REGISTER_WORDS_SUCCESS,
-            data: result,
-        });
-    } catch (error) {
-        console.log(error);
-        if (error?.type === 'ajv') {
-            return sendResponse.badRequest(res, ErrorMessage.ADD_REQUEST_WORDS_ERROR);
-        }
-        sendResponse.fail(req, res, ErrorMessage.REQUEST_DUPLICATE_ERROR);
-    }
-};
+exports.postWords = catchAsync(async (req, res) => {
+    const validData = validateRequest(requestBodySchema, req.body);
+    const { _id } = req.user;
+    const { formData, type, nickname } = validData;
+    const result = await userService.postWords(_id, formData, nickname, type);
+    sendResponse.ok(res, {
+        message: SuccessMessage.REGISTER_WORDS_SUCCESS,
+        data: result,
+    });
+}, ErrorMessage.REQUEST_DUPLICATE_ERROR);
 
 exports.UserRequests = catchAsync(async (req, res) => {
     const { _id } = req.user;
@@ -260,4 +245,8 @@ exports.deleteUser = catchAsync(async (req, res) => {
 
 const setRefreshTokenCookie = (res, refreshToken) => {
     res.cookie('refreshToken', refreshToken, config.cookieInRefreshTokenOptions);
+};
+
+const clearRefreshTokenCookie = (res) => {
+    res.clearCookie('refreshToken', config.cookieInRefreshTokenDeleteOptions);
 };

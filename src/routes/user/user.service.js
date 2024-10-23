@@ -96,6 +96,10 @@ exports.isUserExist = async (userId) => {
     return await userRepository.findUserById(userId);
 };
 
+exports.logout = async (email) => {
+    await redisClient.del(email);
+};
+
 exports.getRecentSearches = async (userId) => {
     const recentSearches = await userRepository.getRecentSearches(userId);
     return recentSearches;
