@@ -1,5 +1,8 @@
+const wordService = require('../word/word.service');
 const userRepository = require('./user.repository');
-const wordRepository = require('../word/word.repository');
+const redisClient = require('../../common/modules/redis');
+const { generateAccessToken, generateRefreshToken } = require('../../common/utils/auth');
+const config = require('../../common/config');
 
 exports.register = async (userData) => {
     const newUser = {
@@ -12,6 +15,16 @@ exports.register = async (userData) => {
 
 exports.kakaoRegister = async (newUser) => {
     return await userRepository.createUser(newUser);
+};
+
+exports.handleLogin = async (user) => {
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await redisClient.set(user.email, refreshToken);
+    await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
+
+    return { accessToken, refreshToken };
 };
 
 exports.isNicknameExist = async (nickname) => {
@@ -29,6 +42,14 @@ exports.isKaKaoUserExist = async (snsId) => {
     return user;
 };
 
+exports.findUserById = async (userId) => {
+    return await userRepository.findUserById(userId);
+};
+
+exports.isUserExist = async (userId) => {
+    return await userRepository.findUserById(userId);
+};
+
 exports.getRecentSearches = async (userId) => {
     const recentSearches = await userRepository.getRecentSearches(userId);
     return recentSearches;
@@ -38,14 +59,12 @@ exports.delRecentSearch = async (userId, searchTerm) => {
     return await userRepository.delRecentSearch(userId, searchTerm);
 };
 
-// 최근 검색어 저장
 exports.updateRecentSearch = async (userID, searchTerm) => {
     if (userID) {
         await userRepository.updateRecentSearch(userID, searchTerm);
     }
 };
 
-// 단어 추가 및 수정
 exports.postWords = async (userId, formData, nickname, type) => {
     const word = await userRepository.postWords(userId, formData, nickname, type);
     return word;
@@ -70,6 +89,10 @@ exports.getRole = async (userId) => {
     return role;
 };
 
+exports.findUserByRequestId = async (requestId) => {
+    return await userRepository.findUserByRequestId(requestId);
+};
+
 exports.updateRequest = async (requestId, formData) => {
     if (requestId) {
         await userRepository.updateRequest(requestId, formData);
@@ -78,13 +101,12 @@ exports.updateRequest = async (requestId, formData) => {
 
 exports.updateRequestState = async (userId, requestId, status, formData, requestType) => {
     if (userId) {
-        await userRepository.updateRequestState(userId, requestId, status, formData);
+        await userRepository.updateRequestState(requestId, status);
         if (requestType === 'add') {
-            //TODO: add 일 때, 단어 중복검사 로직 우선적 검증 추가
-            await wordRepository.addWord(requestId, formData);
+            await wordService.addWord(requestId, formData);
             await userRepository.updateRequest(requestId, formData);
         } else if (requestType === 'mod') {
-            await wordRepository.updateWord(requestId, formData);
+            await wordService.updateWord(requestId, formData);
             await userRepository.updateRequest(requestId, formData);
         } else {
             console.log('requestType 오류');

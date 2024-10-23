@@ -9,6 +9,10 @@ exports.createUser = async (userData) => {
     }
 };
 
+exports.findUserById = async (_id) => {
+    return await User.findOne({ _id });
+};
+
 exports.findUserByNickname = async (nickname) => {
     const userExists = await User.exists({ nickname });
     return userExists ? true : false;
@@ -199,13 +203,16 @@ exports.getRole = async (userId) => {
     }
 };
 
+exports.findUserByRequestId = async (requestId) => {
+    return await User.findOne({ 'requests._id': requestId }).exec();
+};
+
 exports.updateRequest = async (requestId, formData) => {
     try {
         const user = await User.findOne({ 'requests._id': requestId }).select('requests').exec();
         if (!user) {
             throw new Error('User not found');
         }
-
         const request = user.requests.find((req) => req._id.toString() === requestId && req.deletedAt === null);
         if (request) {
             if (formData.addInfo !== undefined) {
