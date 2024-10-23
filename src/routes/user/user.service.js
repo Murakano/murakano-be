@@ -165,6 +165,7 @@ exports.updateRequestState = async (userId, requestId, status, formData, request
     }
 };
 
-exports.deleteUser = async (_id) => {
+exports.deleteUserAndRelatedData = async (_id) => {
+    await wordService.deleteWordContributor(_id);
     return await userRepository.deleteUserById(_id);
 };

@@ -224,20 +224,13 @@ exports.updateRequestState = catchAsync(async (req, res) => {
 }, ErrorMessage.UPDATE_REQUEST_STATE_ERROR);
 
 exports.deleteUser = catchAsync(async (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
-    if (refreshToken) {
-        try {
-            const email = req.user.email;
-            await redisClient.del(email);
-        } catch (err) {
-            console.error('Redis error:', err);
-        }
-    }
-    res.clearCookie('refreshToken', config.cookieInRefreshTokenDeleteOptions);
-
     const { _id } = req.user;
-    await wordService.deleteWordContributor(_id);
-    await userService.deleteUser(_id);
+    if (req.cookies.refreshToken) {
+        await userService.logout(req.user.email);
+    }
+
+    clearRefreshTokenCookie(res);
+    await userService.deleteUserAndRelatedData(_id);
     sendResponse.ok(res, {
         message: SuccessMessage.DELETE_USER_SUCCESS,
     });
