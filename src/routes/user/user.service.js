@@ -2,6 +2,7 @@ const wordService = require('../word/word.service');
 const userRepository = require('./user.repository');
 const redisClient = require('../../common/modules/redis');
 const { generateAccessToken, generateRefreshToken } = require('../../common/utils/auth');
+const { getKakaoToken, getUserInfo } = require('../../common/utils/kakao');
 const config = require('../../common/config');
 
 exports.register = async (userData) => {
@@ -18,6 +19,26 @@ exports.kakaoRegister = async (newUser) => {
 };
 
 exports.handleLogin = async (user) => {
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    await redisClient.set(user.email, refreshToken);
+    await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
+
+    return { accessToken, refreshToken };
+};
+
+exports.handleKakaoLogin = async (code) => {
+    const { kakaoAccessToken } = await getKakaoToken(code);
+    const { snsId, email, nickname } = await getUserInfo(kakaoAccessToken);
+
+    const kakaoUser = { snsId, email, nickname, provider: 'kakao' };
+
+    let user = await this.isKaKaoUserExist(kakaoUser.snsId);
+    if (!user) {
+        user = await this.kakaoRegister(kakaoUser);
+    }
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 

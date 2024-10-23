@@ -17,7 +17,6 @@ const {
     requestBodySchema,
 } = require('./user.schema');
 const { generateAccessToken, generateRefreshToken } = require('../../common/utils/auth');
-const { getKakaoToken, getUserInfo } = require('../../common/utils/kakao');
 const { catchAsync } = require('../../common/utils/catch-async');
 
 exports.register = catchAsync(async (req, res) => {
@@ -79,8 +78,7 @@ exports.localLogin = catchAsync(async (req, res, next) => {
         }
 
         const tokens = await userService.handleLogin(user);
-
-        res.cookie('refreshToken', tokens.refreshToken, config.cookieInRefreshTokenOptions);
+        setRefreshTokenCookie(res, tokens.refreshToken);
 
         return sendResponse.ok(res, {
             message: SuccessMessage.LOGIN_SUCCESSS,
@@ -93,27 +91,13 @@ exports.localLogin = catchAsync(async (req, res, next) => {
 
 exports.kakaoLogin = catchAsync(async (req, res) => {
     const { code } = req.body;
-    const { kakaoAccessToken } = await getKakaoToken(code);
-    const { snsId, email, nickname } = await getUserInfo(kakaoAccessToken);
-
-    const kakaoUser = { snsId: snsId, email, nickname, provider: 'kakao' };
-
-    let user = await userService.isKaKaoUserExist(kakaoUser.snsId);
-    if (!user) {
-        user = await userService.kakaoRegister(kakaoUser);
-    }
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    await redisClient.set(user.email, refreshToken);
-    await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
-    res.cookie('refreshToken', refreshToken, config.cookieInRefreshTokenOptions);
+    const tokens = await userService.handleKakaoLogin(code);
+    setRefreshTokenCookie(res, tokens.refreshToken);
 
     sendResponse.ok(res, {
         message: SuccessMessage.LOGIN_SUCCESSS,
         data: {
-            accessToken: accessToken,
+            accessToken: tokens.accessToken,
         },
     });
 }, ErrorMessage.KAKAO_LOGIN_ERROR);
@@ -158,7 +142,8 @@ exports.refreshToken = catchAsync(async (req, res) => {
 
         await redisClient.set(user.email, newRefreshToken);
         await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
-        res.cookie('refreshToken', newRefreshToken, config.cookieInRefreshTokenOptions);
+
+        setRefreshTokenCookie(res, newRefreshToken);
 
         sendResponse.ok(res, {
             message: SuccessMessage.REFRESH_TOKEN,
@@ -306,3 +291,7 @@ exports.deleteUser = catchAsync(async (req, res) => {
         message: SuccessMessage.DELETE_USER_SUCCESS,
     });
 }, ErrorMessage.DELETE_USER_ERROR);
+
+const setRefreshTokenCookie = (res, refreshToken) => {
+    res.cookie('refreshToken', refreshToken, config.cookieInRefreshTokenOptions);
+};
