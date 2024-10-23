@@ -33,17 +33,12 @@ exports.register = catchAsync(async (req, res) => {
 exports.isNicknameExist = catchAsync(async (req, res) => {
     const { nickname } = validateRequest(nicknameCheckReqQuerySchema, req.query);
     const isUserExist = await userService.isNicknameExist(nickname);
-    data = { isUserExist };
 
-    if (isUserExist) {
-        return sendResponse.ok(res, {
-            message: ErrorMessage.EXIST_NICKNAME,
-            data,
-        });
-    }
+    const data = { isUserExist };
+    const message = isUserExist ? ErrorMessage.EXIST_NICKNAME : SuccessMessage.AVAILABLE_NICKNAME;
 
     return sendResponse.ok(res, {
-        message: SuccessMessage.AVAILABLE_NICKNAME,
+        message,
         data,
     });
 }, ErrorMessage.NICKNAME_CHECK_ERROR);
@@ -53,15 +48,10 @@ exports.isEmailExist = catchAsync(async (req, res) => {
 
     const isUserExist = await userService.isEmailExist(email);
     const data = { isUserExist };
+    const message = isUserExist ? ErrorMessage.EXIST_EMAIL : SuccessMessage.AVAILABLE_EMAIL;
 
-    if (isUserExist) {
-        return sendResponse.ok(res, {
-            message: ErrorMessage.EXIST_EMAIL,
-            data,
-        });
-    }
     return sendResponse.ok(res, {
-        message: SuccessMessage.AVAILABLE_EMAIL,
+        message,
         data,
     });
 }, ErrorMessage.EMAIL_CHECK_ERROR);
