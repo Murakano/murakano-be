@@ -108,37 +108,13 @@ exports.refreshToken = catchAsync(async (req, res) => {
             });
         }
 
-        const storedRefreshToken = await redisClient.get(user.email);
-
-        if (storedRefreshToken !== refreshToken) {
-            console.error('Refresh token mismatch');
-            await redisClient.del(user.email);
-            res.clearCookie('refreshToken', config.cookieInRefreshTokenDeleteOptions);
-            return sendResponse.unAuthorized(res, {
-                message: ErrorMessage.REFRESH_TOKEN_MISMATCH,
-            });
-        }
-
-        const newAccessToken = generateAccessToken({
-            _id: user.userId,
-            nickname: user.nickname,
-            email: user.email,
-        });
-        const newRefreshToken = generateRefreshToken({
-            _id: user.userId,
-            nickname: user.nickname,
-            email: user.email,
-        });
-
-        await redisClient.set(user.email, newRefreshToken);
-        await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
-
-        setRefreshTokenCookie(res, newRefreshToken);
+        const tokens = await userService.refreshTokens(user, refreshToken);
+        setRefreshTokenCookie(res, tokens.newRefreshToken);
 
         sendResponse.ok(res, {
             message: SuccessMessage.REFRESH_TOKEN,
             data: {
-                accessToken: newAccessToken,
+                accessToken: tokens.newAccessToken,
             },
         });
     });

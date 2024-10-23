@@ -48,6 +48,31 @@ exports.handleKakaoLogin = async (code) => {
     return { accessToken, refreshToken };
 };
 
+exports.refreshTokens = async (user, oldRefreshToken) => {
+    const storedRefreshToken = await redisClient.get(user.email);
+
+    if (storedRefreshToken !== oldRefreshToken) {
+        await redisClient.del(user.email);
+        return null;
+    }
+
+    const newAccessToken = generateAccessToken({
+        _id: user.userId,
+        nickname: user.nickname,
+        email: user.email,
+    });
+    const newRefreshToken = generateRefreshToken({
+        _id: user.userId,
+        nickname: user.nickname,
+        email: user.email,
+    });
+
+    await redisClient.set(user.email, newRefreshToken);
+    await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
+
+    return { newAccessToken, newRefreshToken };
+};
+
 exports.isNicknameExist = async (nickname) => {
     const isUserExist = await userRepository.findUserByNickname(nickname);
     return isUserExist;
