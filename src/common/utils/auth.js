@@ -14,6 +14,12 @@ exports.generateRefreshToken = (user) => {
     });
 };
 
+exports.generateTokens = (user) => {
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+    return { accessToken, refreshToken };
+};
+
 const authenticateJWT = (req, res) => {
     return new Promise((resolve, reject) => {
         passport.authenticate('jwt', { session: false }, (err, user, info) => {
@@ -56,6 +62,7 @@ exports.isNotLoggedIn = async (req, res, next) => {
         await authenticateJWT(req, res);
         res.status(403).json({ message: '이미 로그인된 상태입니다.' });
     } catch (error) {
+        console.log(error);
         if (error.status === 401) {
             next();
         } else {
