@@ -1,7 +1,7 @@
 const wordService = require('../word/word.service');
 const userRepository = require('./user.repository');
 const redisClient = require('../../common/modules/redis');
-const { generateAccessToken, generateRefreshToken } = require('../../common/utils/auth');
+const { generateTokens } = require('../../common/utils/auth');
 const { getKakaoToken, getUserInfo } = require('../../common/utils/kakao');
 const config = require('../../common/config');
 
@@ -19,33 +19,36 @@ exports.kakaoRegister = async (newUser) => {
 };
 
 exports.handleLogin = async (user) => {
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-
-    await redisClient.set(user.email, refreshToken);
-    await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
-
-    return { accessToken, refreshToken };
+    const tokens = await generateTokens(user);
+    await this.storeRefreshToken(user.email, tokens.refreshToken);
+    return tokens;
 };
 
 exports.handleKakaoLogin = async (code) => {
-    const { kakaoAccessToken } = await getKakaoToken(code);
-    const { snsId, email, nickname } = await getUserInfo(kakaoAccessToken);
-
-    const kakaoUser = { snsId, email, nickname, provider: 'kakao' };
-
+    const kakaoUser = await this.fetchKakaoUser(code);
     let user = await this.isKaKaoUserExist(kakaoUser.snsId);
     if (!user) {
         user = await this.kakaoRegister(kakaoUser);
     }
+    const tokens = await generateTokens(user);
+    await this.storeRefreshToken(user.email, tokens.refreshToken);
+    return tokens;
+};
 
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+exports.fetchKakaoUser = async (code) => {
+    const { kakaoAccessToken } = await getKakaoToken(code);
+    const kakaoData = await getUserInfo(kakaoAccessToken);
+    return {
+        snsId: kakaoData.snsId,
+        email: kakaoData.email,
+        nickname: kakaoData.nickname,
+        provider: 'kakao',
+    };
+};
 
-    await redisClient.set(user.email, refreshToken);
-    await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
-
-    return { accessToken, refreshToken };
+exports.storeRefreshToken = async (email, refreshToken) => {
+    await redisClient.set(email, refreshToken);
+    await redisClient.expire(email, config.cookieInRefreshTokenOptions.maxAge / 1000);
 };
 
 exports.refreshTokens = async (user, oldRefreshToken) => {
@@ -56,36 +59,23 @@ exports.refreshTokens = async (user, oldRefreshToken) => {
         return null;
     }
 
-    const newAccessToken = generateAccessToken({
-        _id: user.userId,
-        nickname: user.nickname,
-        email: user.email,
-    });
-    const newRefreshToken = generateRefreshToken({
-        _id: user.userId,
-        nickname: user.nickname,
-        email: user.email,
-    });
-
-    await redisClient.set(user.email, newRefreshToken);
+    const tokens = await generateTokens(user);
+    await redisClient.set(user.email, tokens.refreshToken);
     await redisClient.expire(user.email, config.cookieInRefreshTokenOptions.maxAge / 1000);
 
-    return { newAccessToken, newRefreshToken };
+    return tokens;
 };
 
 exports.isNicknameExist = async (nickname) => {
-    const isUserExist = await userRepository.findUserByNickname(nickname);
-    return isUserExist;
+    return await userRepository.findUserByNickname(nickname);
 };
 
 exports.isEmailExist = async (email) => {
-    const isUserExist = await userRepository.findUserByEmail(email);
-    return isUserExist;
+    return await userRepository.findUserByEmail(email);
 };
 
 exports.isKaKaoUserExist = async (snsId) => {
-    const user = await userRepository.getUserBySnsId(snsId);
-    return user;
+    return await userRepository.getUserBySnsId(snsId);
 };
 
 exports.findUserById = async (userId) => {
@@ -101,8 +91,7 @@ exports.logout = async (email) => {
 };
 
 exports.getRecentSearches = async (userId) => {
-    const recentSearches = await userRepository.getRecentSearches(userId);
-    return recentSearches;
+    return await userRepository.getRecentSearches(userId);
 };
 
 exports.delRecentSearch = async (userId, searchTerm) => {
@@ -115,33 +104,18 @@ exports.updateRecentSearch = async (userID, searchTerm) => {
     }
 };
 
-exports.postWords = async (userId, formData, nickname, type) => {
-    const word = await userRepository.postWords(userId, formData, nickname, type);
-    return word;
-};
-exports.getUserRequests = async (userId) => {
-    const requests = await userRepository.getUserRequests(userId);
-    return requests;
-};
+exports.postWords = async (userId, formData, nickname, type) =>
+    await userRepository.postWords(userId, formData, nickname, type);
 
-exports.getUserRequestsAll = async () => {
-    const requests = await userRepository.getUserRequestsAll();
-    return requests;
-};
+exports.getUserRequests = async (userId) => await userRepository.getUserRequests(userId);
 
-exports.deleteRequest = async (userId, requestWord) => {
-    const result = await userRepository.deleteRequest(userId, requestWord);
-    return result;
-};
+exports.getUserRequestsAll = async () => await userRepository.getUserRequestsAll();
 
-exports.getRole = async (userId) => {
-    const role = await userRepository.getRole(userId);
-    return role;
-};
+exports.deleteRequest = async (userId, requestWord) => await userRepository.deleteRequest(userId, requestWord);
 
-exports.findUserByRequestId = async (requestId) => {
-    return await userRepository.findUserByRequestId(requestId);
-};
+exports.getRole = async (userId) => await userRepository.getRole(userId);
+
+exports.findUserByRequestId = async (requestId) => await userRepository.findUserByRequestId(requestId);
 
 exports.updateRequest = async (requestId, formData) => {
     if (requestId) {
@@ -158,9 +132,6 @@ exports.updateRequestState = async (userId, requestId, status, formData, request
         } else if (requestType === 'mod') {
             await wordService.updateWord(requestId, formData);
             await userRepository.updateRequest(requestId, formData);
-        } else {
-            console.log('requestType 오류');
-            return;
         }
     }
 };
