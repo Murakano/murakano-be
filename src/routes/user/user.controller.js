@@ -108,12 +108,11 @@ exports.refreshToken = catchAsync(async (req, res) => {
         }
 
         const tokens = await userService.refreshTokens(user, refreshToken);
-        setRefreshTokenCookie(res, tokens.newRefreshToken);
-
+        setRefreshTokenCookie(res, tokens.refreshToken);
         sendResponse.ok(res, {
             message: SuccessMessage.REFRESH_TOKEN,
             data: {
-                accessToken: tokens.newAccessToken,
+                accessToken: tokens.accessToken,
             },
         });
     });
