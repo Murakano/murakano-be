@@ -12,6 +12,8 @@ const wordSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+wordSchema.index({ word: 1 });
+
 wordSchema.pre(/^findOne/, async function (next) {
     await this.model.updateOne(this.getQuery(), { $inc: { freq: 1 } });
     next();
