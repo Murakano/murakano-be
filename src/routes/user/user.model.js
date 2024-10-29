@@ -58,7 +58,7 @@ userSchema.pre(/^find|update|save|remove|delete|count/, function (next) {
 
 userSchema.post(/^find|update|save|remove|delete|count/, function (result, next) {
     const latency = Date.now() - this._startTime;
-    console.log(`[${this.mongooseCollection.modelName}] ${this.op} query - ${latency}ms`);
+    console.log(`[${this.mongooseCollection?.modelName}] ${this.op} query - ${latency}ms`);
     next();
 });
 
