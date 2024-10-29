@@ -1,12 +1,28 @@
 const Word = require('./word.model');
+const redisClient = require('../../common/modules/redis');
 
 exports.getSearchWords = async (searchTerm) => {
     return await Word.findOne({ word: { $regex: `^${searchTerm}$`, $options: 'i' } });
 };
 
 exports.getRankWords = async () => {
-    const words = await Word.find().sort({ freq: -1 }).limit(10);
-    return words.map((word) => word.word);
+    const words = await redisClient.sendCommand(['ZREVRANGE', 'popular_words', '0', '9']);
+
+    if (words && words.length > 0) {
+        return words;
+    }
+
+    const dbWords = await Word.find().sort({ freq: -1 }).limit(10).select('word freq').lean();
+    const wordList = dbWords.map((word) => word.word);
+
+    await redisClient.sendCommand([
+        'ZADD',
+        'popular_words',
+        ...dbWords.flatMap((word) => [String(word.freq), word.word]),
+    ]);
+    await redisClient.expire('popular_words', 7200);
+
+    return wordList;
 };
 
 exports.getRelatedWords = async (searchTerm, limit) => {
