@@ -51,6 +51,17 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+userSchema.pre(/^find|update|save|remove|delete|count/, function (next) {
+    this._startTime = Date.now();
+    next();
+});
+
+userSchema.post(/^find|update|save|remove|delete|count/, function (result, next) {
+    const latency = Date.now() - this._startTime;
+    console.log(`[${this.mongooseCollection.modelName}] ${this.op} query - ${latency}ms`);
+    next();
+});
+
 userSchema.pre('save', async function (next) {
     try {
         if ((this.isNew && !this.provider) || this.isModified('password')) {
