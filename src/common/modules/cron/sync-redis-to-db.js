@@ -6,13 +6,12 @@ const Word = require('../../../routes/word/word.model');
 // NOTE : 매 정각마다 Redis 조회수를 DB에 반영
 cron.schedule('0 * * * *', async () => {
     try {
-        const popularWordsRaw = await redisClient.sendCommand(['ZRANGE', 'popular_words', '0', '-1', 'WITHSCORES']);
-        console.log('popularWordsRaw:', popularWordsRaw);
+        const cachedWordsRaw = await redisClient.sendCommand(['ZRANGE', 'popular_words', '0', '-1', 'WITHSCORES']);
 
         const updates = [];
-        for (let i = 0; i < popularWordsRaw.length; i += 2) {
-            const word = popularWordsRaw[i];
-            const redisFreq = Number(popularWordsRaw[i + 1]);
+        for (let i = 0; i < cachedWordsRaw.length; i += 2) {
+            const word = cachedWordsRaw[i];
+            const redisFreq = Number(cachedWordsRaw[i + 1]);
 
             // NOTE : word 스키마의 조회수 증가 미들웨어를 우회하기 위해 Mongoose 대신 MongoDB 드라이버를 사용
             const dbWord = await mongoose.connection.collection('words').findOne({ word }, { projection: { freq: 1 } });
