@@ -12,9 +12,11 @@ const addNonce = require('../../../middlewares/add-nonce');
 const checkBlockedIp = require('../../../middlewares/check-blocked-ip');
 const setContentSecurityPolicy = require('../../../middlewares/set-content-security-policy');
 const setupCors = require('../../../middlewares/setup-cors');
+const latencyLogger = require('../../../middlewares/latency-logger');
 
-module.exports = expressLoader = (app) => {
+module.exports = expressLoader = async (app) => {
     passportConfig();
+
     app.use(morgan('dev'));
     app.use(helmet());
 
@@ -29,8 +31,8 @@ module.exports = expressLoader = (app) => {
     app.use(cookieParser());
 
     app.use(checkBlockedIp);
-
     app.use(commonLimiter);
+    app.use(latencyLogger);
     app.use(router);
     app.use('/docs', swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }));
 

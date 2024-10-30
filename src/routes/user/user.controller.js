@@ -1,10 +1,8 @@
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const config = require('../../common/config');
-const redisClient = require('../../common/modules/redis');
 
 const userService = require('./user.service');
-const wordService = require('../word/word.service');
 const sendResponse = require('../../common/utils/response-handler');
 const ErrorMessage = require('../../common/constants/error-message');
 const SuccessMessage = require('../../common/constants/success-message');

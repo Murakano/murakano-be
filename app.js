@@ -3,6 +3,7 @@ const conf = require('./src/common/config/index');
 const expressLoader = require('./src/common/modules/express');
 const initDB = require('./src/common/modules/mongodb');
 const { START_MESSAGE } = require('./src/common/constants/express');
+require('./src/common/modules/cron/sync-redis-to-db');
 
 const app = express();
 
