@@ -40,7 +40,7 @@ function generateUsers(count) {
 
 async function generateAndSaveData(totalCount) {
     const userData = generateUsers(totalCount);
-    const fileName = './data/test-users-data.json';
+    const fileName = './scripts/data/test-users-data.json';
     fs.writeFileSync(fileName, JSON.stringify(userData, null, 2));
 
     console.log('✅ 10000개의 유저 데이터가 생성되었습니다.');

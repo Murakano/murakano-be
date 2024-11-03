@@ -33,7 +33,7 @@ function* generateWordBatch(totalCount, batchSize = 1000) {
 
 async function generateAndSaveData(totalCount) {
     console.time('Data Generation');
-    const fileName = './data/test-words-data.json';
+    const fileName = './scripts/data/test-words-data.json';
     const batchSize = 1000;
     let currentBatch = 1;
     const totalBatches = Math.ceil(totalCount / batchSize);
