@@ -1,36 +1,102 @@
+const userService = require('../user/user.service');
 const wordRepository = require('./word.repository');
 
-// 검색 결과 조회
 exports.getSearchWords = async (searchTerm) => {
-    const searchWords = await wordRepository.getSearchWords(searchTerm);
-    return searchWords;
+    const escapedSearchTerm = searchTerm.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    return await wordRepository.getSearchWords(escapedSearchTerm);
 };
 
-// 인기검색어 조회
 exports.getRankWords = async () => {
-    const rankWords = await wordRepository.getRankWords();
-    return rankWords;
+    return await wordRepository.getRankWords();
 };
 
-// 연관검색어 조회
 exports.getRelatedWords = async (searchTerm, limit) => {
-    const relatedWords = await wordRepository.getRelatedWords(searchTerm, limit);
-    return relatedWords;
+    const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return await wordRepository.getRelatedWords(escapedTerm, limit);
 };
 
-// 전체 단어 목록 조회 & 정렬 (최초 로딩시, 최신순 정렬)
 exports.getAllWords = async (sort, page, limit) => {
-    const words = await wordRepository.getAllWords(sort, page, limit);
-    return words;
+    const skip = (page - 1) * limit;
+    const sortOrder = {};
+    const collation = { locale: 'en', strength: 2 };
+
+    if (sort === 'asc' || sort === 'desc') {
+        sortOrder.word = sort === 'asc' ? 1 : -1;
+    } else if (sort === 'popularity') {
+        sortOrder.freq = -1;
+        sortOrder.word = 1;
+    } else if (sort === 'recent') {
+        sortOrder.createdAt = -1;
+        sortOrder.word = 1;
+    }
+    return await wordRepository.getAllWords(collation, sortOrder, skip, limit);
+};
+
+exports.addWord = async (requestId, formData) => {
+    const user = await userService.findUserByRequestId(requestId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    const request = user.requests.id(requestId);
+    if (!request) {
+        throw new Error('Request not found');
+    }
+
+    const newWord = {
+        word: formData.devTerm,
+        awkPron: formData.awkPron,
+        comPron: formData.commonPron,
+        info: formData.addInfo,
+        suggestedBy: request.suggestedBy,
+    };
+
+    return await wordRepository.addWord(newWord);
+};
+
+exports.updateWord = async (requestId, formData) => {
+    const user = await userService.findUserByRequestId(requestId);
+    if (!user) {
+        throw new Error('User not found');
+    }
+
+    const request = user.requests.id(requestId);
+    if (!request) {
+        throw new Error('Request not found');
+    }
+
+    const existingWord = await wordRepository.findWordByRequest(request.word);
+    if (!existingWord) {
+        throw new Error('Word not found');
+    }
+
+    const updatedFields = {
+        word: formData.devTerm,
+        awkPron: formData.awkPron,
+        comPron: formData.commonPron,
+        info: formData.addInfo,
+        suggestedBy: request.suggestedBy,
+    };
+
+    return await wordRepository.updateWord(existingWord, updatedFields);
 };
 
 exports.deleteWordContributor = async (_id) => {
-    return await wordRepository.deleteWordContributor(_id);
+    const user = await userService.findUserById(_id);
+    if (!user) {
+        throw new Error('User not found');
+    }
+    return await wordRepository.deleteWordContributor(user.nickname);
 };
 
-// 등록 단어 중복 검사
 exports.checkDuplicateWord = async (word) => {
-    const isDuplicate = await wordRepository.checkDuplicateWord(word);
-    console.log('isDuplicate: ', isDuplicate);
-    return isDuplicate;
+    const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return await wordRepository.checkDuplicateWord(escapedWord);
+};
+
+exports.updateRecentWordIfLogined = async (req, searchTerm) => {
+    const userId = req.user?._id;
+    if (userId) {
+        await userService.updateRecentSearch(userId, searchTerm);
+    }
 };

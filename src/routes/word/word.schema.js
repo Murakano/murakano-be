@@ -29,10 +29,10 @@ const wordListSchema = {
     type: 'object',
     properties: {
         limit: {
-            type: 'number',
+            type: 'string',
         },
         page: {
-            type: 'number',
+            type: 'string',
         },
         sort: {
             type: 'string',

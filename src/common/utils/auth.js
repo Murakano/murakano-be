@@ -14,7 +14,12 @@ exports.generateRefreshToken = (user) => {
     });
 };
 
-// JWT 인증 함수
+exports.generateTokens = (user) => {
+    const accessToken = this.generateAccessToken(user);
+    const refreshToken = this.generateRefreshToken(user);
+    return { accessToken, refreshToken };
+};
+
 const authenticateJWT = (req, res) => {
     return new Promise((resolve, reject) => {
         passport.authenticate('jwt', { session: false }, (err, user, info) => {
@@ -22,6 +27,7 @@ const authenticateJWT = (req, res) => {
                 return reject({ status: 500, message: '서버 오류', error: err.message });
             }
             if (info) {
+                console.log(info.name);
                 switch (info.name) {
                     case 'TokenExpiredError':
                         return reject({ status: 401, message: '토큰이 만료되었습니다.', expiredAt: info.expiredAt });
@@ -39,7 +45,6 @@ const authenticateJWT = (req, res) => {
     });
 };
 
-// 로그인 여부 확인 미들웨어
 exports.isLoggedIn = async (req, res, next) => {
     try {
         const user = await authenticateJWT(req, res);
@@ -52,13 +57,12 @@ exports.isLoggedIn = async (req, res, next) => {
     }
 };
 
-// 비로그인 여부 확인 미들웨어
 exports.isNotLoggedIn = async (req, res, next) => {
     try {
         await authenticateJWT(req, res);
         res.status(403).json({ message: '이미 로그인된 상태입니다.' });
     } catch (error) {
-        // NOTE : 인증되지 않은 사용자인 경우 통과
+        console.log(error);
         if (error.status === 401) {
             next();
         } else {

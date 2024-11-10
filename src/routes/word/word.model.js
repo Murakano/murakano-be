@@ -1,21 +1,40 @@
 const mongoose = require('mongoose');
+const redisClient = require('../../common/modules/redis');
 
 const wordSchema = new mongoose.Schema(
     {
-        word: { type: String, required: true, unique: true }, //콜렉션 이름과 겹치는데 상관없나..
-        awkPron: { type: String }, // 어색한 발음
-        comPron: { type: String, required: true }, // 일반적인 발음
-        info: { type: String }, //추가정보
-        suggestedBy: { type: String, required: true }, // 제안한 사용자의 닉네임
-        freq: { type: Number, default: 0 }, // 인기검색어
+        word: { type: String, required: true },
+        awkPron: { type: String },
+        comPron: { type: String, required: true },
+        info: { type: String },
+        suggestedBy: { type: String, required: true },
+        freq: { type: Number, default: 0 },
     },
     { timestamps: true }
 );
 
-// 검색 시마다 검색어의 freq를 1씩 증가시키는 미들웨어
-wordSchema.pre(/^findOne/, async function (next) {
-    await this.model.updateOne(this.getQuery(), { $inc: { freq: 1 } });
+wordSchema.index({ word: 1 }, { unique: true });
+
+wordSchema.pre(/^find|update|save|remove|delete|count/, function (next) {
+    this._startTime = Date.now();
     next();
+});
+
+wordSchema.post(/^find|update|save|remove|delete|count/, function (result, next) {
+    const latency = Date.now() - this._startTime;
+    console.log(this.getQuery());
+    console.log(`[${this.mongooseCollection.modelName}] ${this.op} query - ${latency}ms`);
+    next();
+});
+
+wordSchema.post(/^findOne/, async function (doc) {
+    const word = typeof this.getQuery().word === 'string' ? this.getQuery().word : doc?.word;
+    if (!word) {
+        console.error('❌ Error: No valid word found for Redis update');
+        return;
+    }
+    await redisClient.sendCommand(['ZINCRBY', 'popular_words', '1', word]);
+    await redisClient.expire('popular_words', 7200);
 });
 
 module.exports = mongoose.model('Word', wordSchema);
